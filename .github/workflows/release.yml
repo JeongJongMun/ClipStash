@@ -39,19 +39,19 @@ jobs:
 
       - name: Publish single-file exe
         shell: pwsh
-        run: dotnet publish ClipStash.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o publish
+        run: dotnet publish EasyClipStash.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o publish
 
       - name: Package
         shell: pwsh
         run: |
-          $zip = "ClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip"
-          Compress-Archive -Path publish/ClipStash.exe, LICENSE -DestinationPath $zip
+          $zip = "EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip"
+          Compress-Archive -Path publish/EasyClipStash.exe, LICENSE -DestinationPath $zip
           Get-Item $zip | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          name: ClipStash ${{ steps.ver.outputs.tag }}
-          files: ClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip
+          name: EasyClipStash ${{ steps.ver.outputs.tag }}
+          files: EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip
           generate_release_notes: true

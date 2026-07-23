@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 public class AppConfig
 {

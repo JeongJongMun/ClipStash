@@ -4,8 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <RootNamespace>ClipStash</RootNamespace>
-    <AssemblyName>ClipStash</AssemblyName>
+    <RootNamespace>EasyClipStash</RootNamespace>
+    <AssemblyName>EasyClipStash</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
@@ -14,13 +14,13 @@
   <!-- 배포 메타데이터: exe 속성창과 패키지에 표시된다 -->
   <PropertyGroup>
     <Version>1.0.0</Version>
-    <Product>ClipStash</Product>
+    <Product>EasyClipStash</Product>
     <Authors>JeongJongMun</Authors>
     <Company>JeongJongMun</Company>
     <Description>클립보드의 이미지·텍스트를 원하는 폴더에 규칙적인 이름으로 저장하는 트레이 앱</Description>
     <Copyright>Copyright © 2026 JeongJongMun</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/JeongJongMun/ClipStash</RepositoryUrl>
+    <RepositoryUrl>https://github.com/JeongJongMun/EasyClipStash</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

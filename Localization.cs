@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 public enum Lang { Korean, English }
 
@@ -45,11 +45,11 @@ public static class L
 
     // ── 실행/공통 ──
     public static string AlreadyRunning
-        => Ko ? "ClipStash가 이미 실행 중입니다.\n트레이 아이콘을 확인하세요."
-              : "ClipStash is already running.\nCheck the tray icon.";
+        => Ko ? "EasyClipStash가 이미 실행 중입니다.\n트레이 아이콘을 확인하세요."
+              : "EasyClipStash is already running.\nCheck the tray icon.";
 
     // ── 설정 창 ──
-    public static string SettingsWindowTitle => Ko ? "ClipStash 설정" : "ClipStash Settings";
+    public static string SettingsWindowTitle => Ko ? "EasyClipStash 설정" : "EasyClipStash Settings";
     public static string GroupGeneral => Ko ? "기본" : "General";
     public static string GroupNaming => Ko ? "파일 이름" : "File name";
     public static string GroupImage => Ko ? "이미지 설정" : "Image";

@@ -1,6 +1,6 @@
 using System.Drawing.Imaging;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 public enum SavedKind { Image, Text }
 

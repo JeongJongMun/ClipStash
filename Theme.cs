@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// 앱 색상과 다크 테마 적용을 한 곳에서 관리한다.

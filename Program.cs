@@ -1,14 +1,14 @@
-namespace ClipStash;
+namespace EasyClipStash;
 
 static class Program
 {
     [STAThread]
     static void Main()
     {
-        using var mutex = new Mutex(true, @"Local\ClipStash_SingleInstance", out bool createdNew);
+        using var mutex = new Mutex(true, @"Local\EasyClipStash_SingleInstance", out bool createdNew);
         if (!createdNew)
         {
-            MessageBox.Show(L.AlreadyRunning, "ClipStash", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(L.AlreadyRunning, "EasyClipStash", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 

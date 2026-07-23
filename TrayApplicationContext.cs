@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 public sealed class TrayApplicationContext : ApplicationContext
 {
@@ -57,7 +57,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         _trayIcon = new NotifyIcon
         {
             Icon = LoadAppIcon(),
-            Text = "ClipStash",
+            Text = "EasyClipStash",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -111,7 +111,7 @@ public sealed class TrayApplicationContext : ApplicationContext
                 Clipboard.SetText(_config.BuildMarkdown(saved.Path));
                 message += "\n" + L.MarkdownCopied;
             }
-            Notify("ClipStash", message, ToolTipIcon.Info);
+            Notify("EasyClipStash", message, ToolTipIcon.Info);
         }
         catch (Exception ex)
         {
@@ -174,7 +174,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     }
 
     /// <summary>어셈블리에 포함된 앱 아이콘. exe 아이콘과 동일한 파일을 쓴다.</summary>
-    private const string IconResourceName = "ClipStash.assets.icon.ico";
+    private const string IconResourceName = "EasyClipStash.assets.icon.ico";
 
     /// <summary>
     /// 트레이용 아이콘을 불러온다. 현재 DPI에 맞는 작은 크기 프레임을 .ico에서 골라 쓰므로

@@ -1,4 +1,4 @@
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// config.json의 모든 항목을 편집하는 설정 창.

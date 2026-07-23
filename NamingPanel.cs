@@ -1,4 +1,4 @@
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// 이름 규칙 한 벌(저장 방식 + 옵션 + 접두/접미사)을 편집하는 재사용 패널.

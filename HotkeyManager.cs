@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// RegisterHotKey 기반 전역 단축키. 메시지 수신용 숨김 창(NativeWindow)을 하나 만들어 사용한다.

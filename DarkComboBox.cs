@@ -1,6 +1,6 @@
 using System.Drawing.Drawing2D;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// 다크 테마용 콤보박스.

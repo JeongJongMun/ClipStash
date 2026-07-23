@@ -1,12 +1,12 @@
 using Microsoft.Win32;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>HKCU Run 키를 통한 로그인 시 자동 실행 등록/해제.</summary>
 public static class StartupManager
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "ClipStash";
+    private const string ValueName = "EasyClipStash";
 
     private static string ExePath => Application.ExecutablePath;
 

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>
 /// 입력 컨트롤의 테두리를 베이지로 덧그리는 공통 로직.

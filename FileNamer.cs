@@ -1,4 +1,4 @@
-namespace ClipStash;
+namespace EasyClipStash;
 
 /// <summary>파일 이름을 만드는 방식.</summary>
 public enum NamingMode { Number, DateTime, DateDaily }
