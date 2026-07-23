@@ -11,12 +11,12 @@ public sealed class NamingPanel : FlowLayoutPanel
     private static readonly DateStyle[] DateStyles = { DateStyle.Ymd8, DateStyle.Ymd6, DateStyle.YmdDash, DateStyle.YmdDash2, DateStyle.Md };
     private static readonly TimeStyle[] TimeStyles = { TimeStyle.None, TimeStyle.Hms, TimeStyle.HmsDash, TimeStyle.Hm };
 
-    private readonly ComboBox _modeCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+    private readonly DarkComboBox _modeCombo = new() { Width = 200 };
     private readonly NumericUpDown _startNumber = new() { Width = 80, Minimum = 0, Maximum = 1_000_000 };
-    private readonly ComboBox _numberPadding = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-    private readonly ComboBox _dateStyle = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-    private readonly ComboBox _timeStyle = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-    private readonly ComboBox _dailyPadding = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+    private readonly DarkComboBox _numberPadding = new() { Width = 200 };
+    private readonly DarkComboBox _dateStyle = new() { Width = 200 };
+    private readonly DarkComboBox _timeStyle = new() { Width = 200 };
+    private readonly DarkComboBox _dailyPadding = new() { Width = 200 };
     private readonly TextBox _prefix = new() { Width = 200 };
     private readonly TextBox _suffix = new() { Width = 200 };
 
@@ -28,7 +28,7 @@ public sealed class NamingPanel : FlowLayoutPanel
     private readonly Label _dailyPaddingLabel = FieldLabel();
     private readonly Label _prefixLabel = FieldLabel();
     private readonly Label _suffixLabel = FieldLabel();
-    private readonly Label _previewLabel = new() { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(6, 8, 3, 3), MaximumSize = new Size(500, 0) };
+    private readonly Label _previewLabel = new() { AutoSize = true, Tag = Theme.Muted_, Margin = new Padding(6, 8, 3, 3), MaximumSize = new Size(500, 0) };
 
     private readonly FlowLayoutPanel _startNumberRow;
     private readonly FlowLayoutPanel _numberPaddingRow;

@@ -14,22 +14,22 @@ public sealed class SettingsForm : Form
     private const int SidebarWidth = 160;
 
     // 입력 컨트롤
-    private readonly ComboBox _languageCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+    private readonly DarkComboBox _languageCombo = new() { Width = 200 };
     private readonly TextBox _savePathBox = new() { Width = 300 };
-    private readonly ComboBox _imageFormatCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+    private readonly DarkComboBox _imageFormatCombo = new() { Width = 200 };
     private readonly TextBox _hotkeyBox = new() { Width = 300, ReadOnly = true, BackColor = SystemColors.Window, Cursor = Cursors.Hand };
     private readonly TextBox _textPathBox = new() { Width = 300 };
-    private readonly ComboBox _textExtCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+    private readonly DarkComboBox _textExtCombo = new() { Width = 200 };
     private readonly CheckBox _copyMarkdownCheck = new() { AutoSize = true, Margin = new Padding(6, 8, 3, 3) };
     private readonly TextBox _urlPrefixBox = new() { Width = 300 };
     private readonly TextBox _templateBox = new() { Width = 300 };
 
-    // 이름 규칙 탭 (이미지/텍스트 각각 독립)
-    private readonly TabControl _namingTabs = new() { Width = 520, Height = 260, Margin = new Padding(0, 4, 0, 0) };
-    private readonly TabPage _imageNamingTab = new();
-    private readonly TabPage _textNamingTab = new();
+    // 이름 규칙 (이미지/텍스트 각각 독립) — OS가 그리는 TabControl은 다크로 칠할 수 없어
+    // 사이드바와 같은 토글 버튼 방식으로 전환한다.
+    private readonly Button[] _namingTabButtons = new Button[2];
     private readonly NamingPanel _imageNaming = new();
     private readonly NamingPanel _textNaming = new();
+    private int _currentNamingTab = -1;
 
     // 라벨/버튼
     private readonly Label _languageLabel = FieldLabel();
@@ -46,7 +46,7 @@ public sealed class SettingsForm : Form
     private readonly Button _browseImageButton = new() { AutoSize = true };
     private readonly Button _browseTextButton = new() { AutoSize = true };
     private readonly Button _resetButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2) };
-    private readonly Button _saveButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2) };
+    private readonly Button _saveButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2), Tag = Theme.Primary };
     private readonly Button _cancelButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2), DialogResult = DialogResult.Cancel };
 
     // 좌측 카테고리 네비게이션과 대응하는 페이지
@@ -93,9 +93,17 @@ public sealed class SettingsForm : Form
         CancelButton = _cancelButton;
 
         BuildLayout();
+        Theme.Apply(this);
         ApplyStrings();
-        SelectPage(0);
+        SelectPage(0);        // 테마 적용 후에 호출해야 선택 상태 색이 유지된다
+        SelectNamingTab(0);
         UpdatePreview();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        Theme.UseDarkTitleBar(this);
     }
 
     private void BuildLayout()
@@ -106,12 +114,29 @@ public sealed class SettingsForm : Form
             Row(_hotkeyLabel, _hotkeyBox),
             _hotkeyHintLabel));
 
-        // 페이지 1: 파일 이름 (이미지/텍스트 탭)
-        _imageNamingTab.Controls.Add(_imageNaming);
-        _textNamingTab.Controls.Add(_textNaming);
-        _namingTabs.TabPages.Add(_imageNamingTab);
-        _namingTabs.TabPages.Add(_textNamingTab);
-        _pages[1] = Page(1, Stack(_namingTabs));
+        // 페이지 1: 파일 이름 (이미지/텍스트 전환)
+        var namingTabBar = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, Margin = new Padding(0, 0, 0, 10) };
+        for (int i = 0; i < _namingTabButtons.Length; i++)
+        {
+            int index = i;
+            var b = new Button
+            {
+                Width = 96,
+                Height = 30,
+                Tag = Theme.Nav,
+                Margin = new Padding(0, 0, 6, 0),
+                Cursor = Cursors.Hand,
+            };
+            b.Click += (_, _) => SelectNamingTab(index);
+            _namingTabButtons[i] = b;
+            namingTabBar.Controls.Add(b);
+        }
+        var namingBody = new Panel { Width = 520, Height = 250, Margin = new Padding(0) };
+        _imageNaming.Dock = DockStyle.Fill;
+        _textNaming.Dock = DockStyle.Fill;
+        namingBody.Controls.Add(_imageNaming);
+        namingBody.Controls.Add(_textNaming);
+        _pages[1] = Page(1, Stack(namingTabBar, namingBody));
 
         // 페이지 2: 이미지 설정
         _pages[2] = Page(2, Stack(
@@ -138,7 +163,7 @@ public sealed class SettingsForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            BackColor = SystemColors.ControlLight,
+            BackColor = SystemColors.ControlLight,   // Theme.Apply가 Surface로 바꾼다
             Padding = new Padding(8, 12, 8, 8),
         };
         for (int i = 0; i < _navButtons.Length; i++)
@@ -148,13 +173,12 @@ public sealed class SettingsForm : Form
             {
                 Width = SidebarWidth - 24,
                 Height = 38,
-                FlatStyle = FlatStyle.Flat,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(10, 0, 0, 0),
                 Margin = new Padding(0, 0, 0, 4),
+                Tag = Theme.Nav,
                 Cursor = Cursors.Hand,
             };
-            b.FlatAppearance.BorderSize = 0;
             b.Click += (_, _) => SelectPage(index);
             _navButtons[i] = b;
             sidebar.Controls.Add(b);
@@ -223,16 +247,25 @@ public sealed class SettingsForm : Form
         for (int i = 0; i < _pages.Length; i++)
         {
             _pages[i].Visible = i == index;
-            bool selected = i == index;
-            _navButtons[i].BackColor = selected ? SystemColors.Highlight : SystemColors.ControlLight;
-            _navButtons[i].ForeColor = selected ? Color.White : SystemColors.ControlText;
-            _navButtons[i].Font = new Font(DefaultFont, selected ? FontStyle.Bold : FontStyle.Regular);
+            Theme.StyleNavButton(_navButtons[i], i == index);
         }
+    }
+
+    /// <summary>파일 이름 페이지 안에서 이미지/텍스트 규칙을 전환한다.</summary>
+    private void SelectNamingTab(int index)
+    {
+        if (_currentNamingTab == index) return;
+        _currentNamingTab = index;
+
+        _imageNaming.Visible = index == 0;
+        _textNaming.Visible = index == 1;
+        for (int i = 0; i < _namingTabButtons.Length; i++)
+            Theme.StyleNavButton(_namingTabButtons[i], i == index);
     }
 
     // ── 레이아웃 헬퍼 ──
     private static Label FieldLabel() => new() { AutoSize = false, Width = 110, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(3, 3, 6, 3), Height = 25 };
-    private static Label HintLabel() => new() { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(6, 0, 3, 6) };
+    private static Label HintLabel() => new() { AutoSize = true, Tag = Theme.Muted_, Margin = new Padding(6, 0, 3, 6) };
 
     /// <summary>페이지 안에서 하위 구획의 제목으로 쓰는 굵은 라벨.</summary>
     private static Label SectionLabel()
@@ -240,7 +273,7 @@ public sealed class SettingsForm : Form
 
     /// <summary>구획을 나누는 가로 실선.</summary>
     private static Panel HorizontalRule()
-        => new() { Height = 1, Width = 500, BackColor = SystemColors.ControlDark, Margin = new Padding(6, 10, 3, 8) };
+        => new() { Height = 1, Width = 500, Tag = Theme.Rule, Margin = new Padding(6, 10, 3, 8) };
 
     private static FlowLayoutPanel Row(Control label, Control control, Control? extra = null)
     {
@@ -325,8 +358,8 @@ public sealed class SettingsForm : Form
             _pageTitles[i].Text = categories[i];
         }
 
-        _imageNamingTab.Text = L.TabImage;
-        _textNamingTab.Text = L.TabText;
+        _namingTabButtons[0].Text = L.TabImage;
+        _namingTabButtons[1].Text = L.TabText;
 
         _languageLabel.Text = L.LanguageLabel;
         _savePathLabel.Text = L.SaveFolderLabel;
