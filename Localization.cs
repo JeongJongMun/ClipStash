@@ -52,8 +52,8 @@ public static class L
     public static string SettingsWindowTitle => Ko ? "ClipStash 설정" : "ClipStash Settings";
     public static string GroupGeneral => Ko ? "기본" : "General";
     public static string GroupNaming => Ko ? "파일 이름" : "File name";
-    public static string GroupImage => Ko ? "이미지" : "Image";
-    public static string GroupText => Ko ? "텍스트" : "Text";
+    public static string GroupImage => Ko ? "이미지 설정" : "Image";
+    public static string GroupText => Ko ? "텍스트 설정" : "Text";
     public static string SaveFolderLabel => Ko ? "이미지 저장 위치" : "Image save location";
     public static string HotkeyLabel => Ko ? "단축키" : "Hotkey";
     public static string HotkeyHint

@@ -2,14 +2,16 @@ namespace ClipStash;
 
 /// <summary>
 /// config.json의 모든 항목을 편집하는 설정 창.
-/// [기본] 언어·단축키 / [파일 이름] 이미지·텍스트 탭에서 각각 독립된 이름 규칙 / [이미지] 저장 위치·마크다운 / [텍스트] 저장 위치·확장자.
-/// 각 이름 규칙 탭과 이미지·텍스트 카테고리에 저장 예시를 실시간으로 보여주고, '설정 초기화'로 기본값 복원이 가능하다.
+/// 왼쪽 카테고리 버튼(기본 / 파일 이름 / 이미지 / 텍스트)으로 오른쪽 페이지를 전환한다.
+/// 각 페이지는 AutoScroll이라 옵션이 늘어나도 잘리지 않는다.
 /// 언어 드롭다운을 바꾸면 창의 모든 문구가 즉시 그 언어로 바뀐다.
 /// </summary>
 public sealed class SettingsForm : Form
 {
     private static readonly TextExtension[] TextExts = { TextExtension.Txt, TextExtension.Md };
     private static readonly ImageFormatKind[] ImageFormats = { ImageFormatKind.Png, ImageFormatKind.Jpg };
+
+    private const int SidebarWidth = 160;
 
     // 입력 컨트롤
     private readonly ComboBox _languageCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
@@ -23,13 +25,13 @@ public sealed class SettingsForm : Form
     private readonly TextBox _templateBox = new() { Width = 300 };
 
     // 이름 규칙 탭 (이미지/텍스트 각각 독립)
-    private readonly TabControl _namingTabs = new() { Width = 530, Height = 250, Margin = new Padding(6) };
+    private readonly TabControl _namingTabs = new() { Width = 520, Height = 260, Margin = new Padding(0, 4, 0, 0) };
     private readonly TabPage _imageNamingTab = new();
     private readonly TabPage _textNamingTab = new();
     private readonly NamingPanel _imageNaming = new();
     private readonly NamingPanel _textNaming = new();
 
-    // 라벨/버튼 (언어 전환 시 다시 채움)
+    // 라벨/버튼
     private readonly Label _languageLabel = FieldLabel();
     private readonly Label _savePathLabel = FieldLabel();
     private readonly Label _imageFormatLabel = FieldLabel();
@@ -47,10 +49,11 @@ public sealed class SettingsForm : Form
     private readonly Button _saveButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2) };
     private readonly Button _cancelButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2), DialogResult = DialogResult.Cancel };
 
-    private readonly GroupBox _generalGroup = MakeGroup();
-    private readonly GroupBox _namingGroup = MakeGroup();
-    private readonly GroupBox _imageGroup = MakeGroup();
-    private readonly GroupBox _textGroup = MakeGroup();
+    // 좌측 카테고리 네비게이션과 대응하는 페이지
+    private readonly Button[] _navButtons = new Button[4];
+    private readonly Panel[] _pages = new Panel[4];
+    private readonly Label[] _pageTitles = new Label[4];
+    private int _currentPage = -1;
 
     /// <summary>저장 버튼으로 닫혔을 때(DialogResult.OK) 편집 결과.</summary>
     public AppConfig Result { get; private set; }
@@ -59,13 +62,13 @@ public sealed class SettingsForm : Form
     {
         Result = current;
 
+        Text = L.SettingsWindowTitle;
+        Icon = TrayApplicationContext.LoadAppIcon();
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
-        AutoSize = true;
-        AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        Icon = TrayApplicationContext.LoadAppIcon();
+        ClientSize = new Size(740, 460);   // 페이지 전환 시 창 크기가 흔들리지 않도록 고정
 
         _languageCombo.Items.AddRange(new object[] { L.DisplayName(Lang.Korean), L.DisplayName(Lang.English) });
 
@@ -91,23 +94,27 @@ public sealed class SettingsForm : Form
 
         BuildLayout();
         ApplyStrings();
+        SelectPage(0);
         UpdatePreview();
     }
 
     private void BuildLayout()
     {
-        _generalGroup.Controls.Add(Stack(
+        // 페이지 0: 기본
+        _pages[0] = Page(0, Stack(
             Row(_languageLabel, _languageCombo),
             Row(_hotkeyLabel, _hotkeyBox),
             _hotkeyHintLabel));
 
+        // 페이지 1: 파일 이름 (이미지/텍스트 탭)
         _imageNamingTab.Controls.Add(_imageNaming);
         _textNamingTab.Controls.Add(_textNaming);
         _namingTabs.TabPages.Add(_imageNamingTab);
         _namingTabs.TabPages.Add(_textNamingTab);
-        _namingGroup.Controls.Add(Stack(_namingTabs));
+        _pages[1] = Page(1, Stack(_namingTabs));
 
-        _imageGroup.Controls.Add(Stack(
+        // 페이지 2: 이미지 설정
+        _pages[2] = Page(2, Stack(
             Row(_savePathLabel, _savePathBox, _browseImageButton),
             Row(_imageFormatLabel, _imageFormatCombo),
             HorizontalRule(),
@@ -116,48 +123,124 @@ public sealed class SettingsForm : Form
             Row(_urlPrefixLabel, _urlPrefixBox),
             Row(_templateLabel, _templateBox)));
 
-        _textGroup.Controls.Add(Stack(
+        // 페이지 3: 텍스트 설정
+        _pages[3] = Page(3, Stack(
             Row(_textFolderLabel, _textPathBox, _browseTextButton),
             _textFolderHintLabel,
             Row(_textExtLabel, _textExtCombo)));
 
-        // 하단: 왼쪽에 초기화, 오른쪽에 저장/취소
-        var bottom = new Panel { Height = 38, Margin = new Padding(0, 8, 0, 0) };
-        _resetButton.Location = new Point(0, 6);
+        var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 12, 12, 12) };
+        foreach (var p in _pages) content.Controls.Add(p);
+
+        // 좌측 카테고리 버튼
+        var sidebar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = SystemColors.ControlLight,
+            Padding = new Padding(8, 12, 8, 8),
+        };
+        for (int i = 0; i < _navButtons.Length; i++)
+        {
+            int index = i;
+            var b = new Button
+            {
+                Width = SidebarWidth - 24,
+                Height = 38,
+                FlatStyle = FlatStyle.Flat,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 0, 0, 0),
+                Margin = new Padding(0, 0, 0, 4),
+                Cursor = Cursors.Hand,
+            };
+            b.FlatAppearance.BorderSize = 0;
+            b.Click += (_, _) => SelectPage(index);
+            _navButtons[i] = b;
+            sidebar.Controls.Add(b);
+        }
+
+        // 하단: 왼쪽 초기화, 오른쪽 저장/취소
+        var bottom = new Panel { Dock = DockStyle.Fill };
+        _resetButton.Location = new Point(12, 8);
         var rightButtons = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.LeftToRight,
             Dock = DockStyle.Right,
             AutoSize = true,
             WrapContents = false,
-            Padding = new Padding(0, 3, 0, 0),
+            Padding = new Padding(0, 5, 12, 0),
         };
         rightButtons.Controls.Add(_saveButton);
         rightButtons.Controls.Add(_cancelButton);
         bottom.Controls.Add(_resetButton);
         bottom.Controls.Add(rightButtons);
 
-        var root = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Padding = new Padding(12) };
-        foreach (var g in new Control[] { _generalGroup, _namingGroup, _imageGroup, _textGroup, bottom })
-        {
-            g.Width = 560;
-            root.Controls.Add(g);
-        }
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2 };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, SidebarWidth));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        root.Controls.Add(sidebar, 0, 0);
+        root.Controls.Add(content, 1, 0);
+        root.Controls.Add(bottom, 0, 1);
+        root.SetColumnSpan(bottom, 2);
+
         Controls.Add(root);
     }
 
+    /// <summary>제목 + 내용으로 구성된 카테고리 페이지 하나를 만든다.</summary>
+    private Panel Page(int index, Control body)
+    {
+        var title = new Label
+        {
+            AutoSize = true,
+            Font = new Font(DefaultFont.FontFamily, DefaultFont.Size + 2, FontStyle.Bold),
+            Margin = new Padding(3, 0, 3, 10),
+        };
+        _pageTitles[index] = title;
+
+        var panel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Visible = false };
+        var stack = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        };
+        stack.Controls.Add(title);
+        stack.Controls.Add(body);
+        panel.Controls.Add(stack);
+        return panel;
+    }
+
+    /// <summary>카테고리를 전환한다. 선택된 버튼을 강조하고 해당 페이지만 보인다.</summary>
+    private void SelectPage(int index)
+    {
+        if (_currentPage == index) return;
+        _currentPage = index;
+
+        for (int i = 0; i < _pages.Length; i++)
+        {
+            _pages[i].Visible = i == index;
+            bool selected = i == index;
+            _navButtons[i].BackColor = selected ? SystemColors.Highlight : SystemColors.ControlLight;
+            _navButtons[i].ForeColor = selected ? Color.White : SystemColors.ControlText;
+            _navButtons[i].Font = new Font(DefaultFont, selected ? FontStyle.Bold : FontStyle.Regular);
+        }
+    }
+
     // ── 레이아웃 헬퍼 ──
-    private static GroupBox MakeGroup() => new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Dock = DockStyle.Top };
     private static Label FieldLabel() => new() { AutoSize = false, Width = 110, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(3, 3, 6, 3), Height = 25 };
     private static Label HintLabel() => new() { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(6, 0, 3, 6) };
 
-    /// <summary>그룹 안에서 하위 구획의 제목으로 쓰는 굵은 라벨.</summary>
+    /// <summary>페이지 안에서 하위 구획의 제목으로 쓰는 굵은 라벨.</summary>
     private static Label SectionLabel()
         => new() { AutoSize = true, Font = new Font(DefaultFont, FontStyle.Bold), Margin = new Padding(6, 0, 3, 4) };
 
     /// <summary>구획을 나누는 가로 실선.</summary>
     private static Panel HorizontalRule()
-        => new() { Height = 1, Width = 520, BackColor = SystemColors.ControlDark, Margin = new Padding(6, 10, 3, 8) };
+        => new() { Height = 1, Width = 500, BackColor = SystemColors.ControlDark, Margin = new Padding(6, 10, 3, 8) };
 
     private static FlowLayoutPanel Row(Control label, Control control, Control? extra = null)
     {
@@ -171,7 +254,7 @@ public sealed class SettingsForm : Form
 
     private static FlowLayoutPanel Stack(params Control[] children)
     {
-        var stack = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Dock = DockStyle.Fill, Padding = new Padding(6) };
+        var stack = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0) };
         stack.Controls.AddRange(children);
         return stack;
     }
@@ -234,10 +317,14 @@ public sealed class SettingsForm : Form
     private void ApplyStrings()
     {
         Text = L.SettingsWindowTitle;
-        _generalGroup.Text = L.GroupGeneral;
-        _namingGroup.Text = L.GroupNaming;
-        _imageGroup.Text = L.GroupImage;
-        _textGroup.Text = L.GroupText;
+
+        string[] categories = { L.GroupGeneral, L.GroupNaming, L.GroupImage, L.GroupText };
+        for (int i = 0; i < categories.Length; i++)
+        {
+            _navButtons[i].Text = categories[i];
+            _pageTitles[i].Text = categories[i];
+        }
+
         _imageNamingTab.Text = L.TabImage;
         _textNamingTab.Text = L.TabText;
 
@@ -332,11 +419,13 @@ public sealed class SettingsForm : Form
 
         if (cfg.SavePath.Length == 0)
         {
+            SelectPage(2);
             Warn(L.EnterSaveFolder);
             return;
         }
         if (!HotkeyManager.TryParse(cfg.Hotkey, out _, out _, out string error))
         {
+            SelectPage(0);
             Warn(error);
             return;
         }
