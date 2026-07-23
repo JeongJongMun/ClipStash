@@ -1,0 +1,57 @@
+name: Release
+
+# 태그(v로 시작)를 푸시하면 빌드 → 패키징 → 릴리스 발행까지 자동으로 수행한다.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '릴리스할 태그 (예: v1.0.0)'
+        required: true
+
+permissions:
+  contents: write   # 릴리스 생성에 필요
+
+jobs:
+  release:
+    runs-on: windows-latest   # WinForms 빌드는 Windows 러너에서만 가능
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # 태그(v1.0.0)에서 버전(1.0.0)을 뽑아 빌드에 주입한다.
+      # 덕분에 릴리스마다 csproj의 Version을 고칠 필요가 없다.
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.tag || github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "tag=$tag / version=$version"
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: dotnet publish ClipStash.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o publish
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $zip = "ClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip"
+          Compress-Archive -Path publish/ClipStash.exe, LICENSE -DestinationPath $zip
+          Get-Item $zip | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ClipStash ${{ steps.ver.outputs.tag }}
+          files: ClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip
+          generate_release_notes: true
