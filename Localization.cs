@@ -25,7 +25,8 @@ public static class L
     public static string SaveClipboard(string hotkey)
         => Ko ? $"클립보드 저장 ({hotkey})" : $"Save clipboard ({hotkey})";
     public static string OpenLastFile => Ko ? "마지막 파일 열기" : "Open last file";
-    public static string OpenFolder => Ko ? "저장 폴더 열기" : "Open save folder";
+    public static string OpenImageFolder => Ko ? "이미지 저장 폴더 열기" : "Open image folder";
+    public static string OpenTextFolder => Ko ? "텍스트 저장 폴더 열기" : "Open text folder";
     public static string CopyMarkdownAuto => Ko ? "마크다운 자동 복사" : "Auto-copy markdown";
     public static string RunAtStartup => Ko ? "시작 프로그램 등록" : "Run at startup";
     public static string Settings => Ko ? "설정..." : "Settings...";

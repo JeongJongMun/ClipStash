@@ -13,7 +13,8 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private readonly ToolStripMenuItem _saveItem;
     private readonly ToolStripMenuItem _openLastItem;
-    private readonly ToolStripMenuItem _openFolderItem;
+    private readonly ToolStripMenuItem _openImageFolderItem;
+    private readonly ToolStripMenuItem _openTextFolderItem;
     private readonly ToolStripMenuItem _copyMarkdownItem;
     private readonly ToolStripMenuItem _startupItem;
     private readonly ToolStripMenuItem _settingsItem;
@@ -28,7 +29,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         _saveItem.Font = new Font(_saveItem.Font, FontStyle.Bold);
 
         _openLastItem = new ToolStripMenuItem("", null, (_, _) => OpenLastFile()) { Enabled = false };
-        _openFolderItem = new ToolStripMenuItem("", null, (_, _) => OpenFolder());
+        _openImageFolderItem = new ToolStripMenuItem("", null, (_, _) => OpenFolder(_config.SavePath));
+        _openTextFolderItem = new ToolStripMenuItem("", null, (_, _) => OpenFolder(_config.EffectiveTextFolder));
 
         _copyMarkdownItem = new ToolStripMenuItem("") { CheckOnClick = true, Checked = _config.CopyMarkdownToClipboard };
         _copyMarkdownItem.CheckedChanged += (_, _) =>
@@ -47,7 +49,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(_saveItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_openLastItem);
-        menu.Items.Add(_openFolderItem);
+        menu.Items.Add(_openImageFolderItem);
+        menu.Items.Add(_openTextFolderItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_copyMarkdownItem);
         menu.Items.Add(_startupItem);
@@ -104,7 +107,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         _saveItem.Text = L.SaveClipboard(_config.Hotkey);
         _openLastItem.Text = L.OpenLastFile;
-        _openFolderItem.Text = L.OpenFolder;
+        _openImageFolderItem.Text = L.OpenImageFolder;
+        _openTextFolderItem.Text = L.OpenTextFolder;
         _copyMarkdownItem.Text = L.CopyMarkdownAuto;
         _startupItem.Text = L.RunAtStartup;
         _settingsItem.Text = L.Settings;
@@ -147,12 +151,12 @@ public sealed class TrayApplicationContext : ApplicationContext
             Process.Start(new ProcessStartInfo(_lastSavedPath) { UseShellExecute = true });
     }
 
-    private void OpenFolder()
+    private void OpenFolder(string folder)
     {
-        if (Directory.Exists(_config.SavePath))
-            Process.Start(new ProcessStartInfo(_config.SavePath) { UseShellExecute = true });
+        if (Directory.Exists(folder))
+            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
         else
-            Notify(L.FolderMissingTitle, L.FolderMissing(_config.SavePath), ToolTipIcon.Warning);
+            Notify(L.FolderMissingTitle, L.FolderMissing(folder), ToolTipIcon.Warning);
     }
 
     private void OpenSettings()
