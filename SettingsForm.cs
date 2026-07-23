@@ -65,6 +65,7 @@ public sealed class SettingsForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        Icon = TrayApplicationContext.LoadAppIcon();
 
         _languageCombo.Items.AddRange(new object[] { L.DisplayName(Lang.Korean), L.DisplayName(Lang.English) });
 

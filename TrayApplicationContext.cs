@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
-using System.Runtime.InteropServices;
 
 namespace ClipStash;
 
@@ -58,7 +56,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _trayIcon = new NotifyIcon
         {
-            Icon = CreateTrayIcon(),
+            Icon = LoadAppIcon(),
             Text = "ClipStash",
             ContextMenuStrip = menu,
             Visible = true,
@@ -175,45 +173,18 @@ public sealed class TrayApplicationContext : ApplicationContext
         base.ExitThreadCore();
     }
 
-    [DllImport("user32.dll")]
-    private static extern bool DestroyIcon(IntPtr handle);
+    /// <summary>어셈블리에 포함된 앱 아이콘. exe 아이콘과 동일한 파일을 쓴다.</summary>
+    private const string IconResourceName = "ClipStash.assets.icon.ico";
 
-    /// <summary>단순한 카메라 모양 트레이 아이콘을 런타임에 그린다. (별도 리소스 파일 불필요)</summary>
-    private static Icon CreateTrayIcon()
+    /// <summary>
+    /// 트레이용 아이콘을 불러온다. 현재 DPI에 맞는 작은 크기 프레임을 .ico에서 골라 쓰므로
+    /// 고DPI에서도 흐려지지 않는다.
+    /// </summary>
+    public static Icon LoadAppIcon()
     {
-        using var bmp = new Bitmap(32, 32);
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Color.Transparent);
-
-            using var body = new SolidBrush(Color.FromArgb(0, 122, 204));
-            g.FillRectangle(body, 11, 4, 10, 6);              // 상단 뷰파인더
-            g.FillPath(body, RoundedRect(2, 8, 28, 20, 4));   // 본체
-            g.FillEllipse(Brushes.White, 10, 12, 12, 12);     // 렌즈 테두리
-            g.FillEllipse(body, 13, 15, 6, 6);                // 렌즈
-        }
-
-        IntPtr hIcon = bmp.GetHicon();
-        try
-        {
-            using var temp = Icon.FromHandle(hIcon);
-            return (Icon)temp.Clone();
-        }
-        finally
-        {
-            DestroyIcon(hIcon);
-        }
-    }
-
-    private static GraphicsPath RoundedRect(int x, int y, int w, int h, int r)
-    {
-        var path = new GraphicsPath();
-        path.AddArc(x, y, r * 2, r * 2, 180, 90);
-        path.AddArc(x + w - r * 2, y, r * 2, r * 2, 270, 90);
-        path.AddArc(x + w - r * 2, y + h - r * 2, r * 2, r * 2, 0, 90);
-        path.AddArc(x, y + h - r * 2, r * 2, r * 2, 90, 90);
-        path.CloseFigure();
-        return path;
+        using var stream = typeof(TrayApplicationContext).Assembly.GetManifestResourceStream(IconResourceName);
+        if (stream is null)
+            return (Icon)SystemIcons.Application.Clone();   // 리소스 누락 시에도 앱은 계속 뜬다
+        return new Icon(stream, SystemInformation.SmallIconSize);
     }
 }

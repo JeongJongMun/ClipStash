@@ -8,7 +8,24 @@
     <AssemblyName>ClipStash</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.0.0</Version>
+    <ApplicationIcon>assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!-- 배포 메타데이터: exe 속성창과 패키지에 표시된다 -->
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Product>ClipStash</Product>
+    <Authors>JeongJongMun</Authors>
+    <Company>JeongJongMun</Company>
+    <Description>클립보드의 이미지·텍스트를 원하는 폴더에 규칙적인 이름으로 저장하는 트레이 앱</Description>
+    <Copyright>Copyright © 2026 JeongJongMun</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/JeongJongMun/ClipStash</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 트레이 아이콘용. 단일 파일 배포에서도 읽히도록 어셈블리에 포함한다 -->
+    <EmbeddedResource Include="assets\icon.ico" />
+  </ItemGroup>
 
 </Project>
