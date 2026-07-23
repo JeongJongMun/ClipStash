@@ -12,6 +12,7 @@ public class AppConfig
     public string MarkdownUrlPrefix { get; set; } = "/assets/img";
     public string MarkdownTemplate { get; set; } = "![]({url})";
     public Lang Language { get; set; } = L.DetectDefault();
+    public bool CheckUpdateOnStartup { get; set; } = true;
 
     // ── 파일 이름 규칙 (이미지·텍스트 각각 독립) ──
     public NamingConfig ImageNaming { get; set; } = new();

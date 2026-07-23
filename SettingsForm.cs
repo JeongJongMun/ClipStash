@@ -43,6 +43,16 @@ public sealed class SettingsForm : Form
     private readonly Label _textExtLabel = FieldLabel();
     private readonly Label _urlPrefixLabel = FieldLabel();
     private readonly Label _templateLabel = FieldLabel();
+    // 업데이트
+    private readonly Label _updateSectionLabel = SectionLabel();
+    private readonly Label _currentVersionLabel = FieldLabel();
+    private readonly Label _currentVersionValue = new() { AutoSize = true, Margin = new Padding(0, 6, 3, 3) };
+    private readonly CheckBox _autoCheckUpdateCheck = new() { AutoSize = true, Margin = new Padding(6, 4, 3, 6) };
+    private readonly Button _checkUpdateButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2), Margin = new Padding(6, 3, 8, 3) };
+    private readonly Button _updateNowButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2), Margin = new Padding(0, 3, 8, 3), Visible = false, Tag = Theme.Primary };
+    private readonly Label _updateStatusLabel = HintLabel();
+    private UpdateInfo? _pendingUpdate;
+
     private readonly Button _browseImageButton = new() { AutoSize = true };
     private readonly Button _browseTextButton = new() { AutoSize = true };
     private readonly Button _resetButton = new() { AutoSize = true, Padding = new Padding(10, 2, 10, 2) };
@@ -88,6 +98,8 @@ public sealed class SettingsForm : Form
         _browseTextButton.Click += (_, _) => Browse(_textPathBox, L.TextFolderPickerDescription);
         _resetButton.Click += (_, _) => ResetToDefaults();
         _saveButton.Click += (_, _) => TrySaveAndClose();
+        _checkUpdateButton.Click += async (_, _) => await CheckForUpdateAsync();
+        _updateNowButton.Click += async (_, _) => await ApplyUpdateAsync();
 
         AcceptButton = _saveButton;
         CancelButton = _cancelButton;
@@ -108,11 +120,22 @@ public sealed class SettingsForm : Form
 
     private void BuildLayout()
     {
-        // 페이지 0: 기본
+        // 페이지 0: 기본 (+ 업데이트 섹션)
+        var updateButtons = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, Margin = new Padding(0) };
+        updateButtons.Controls.Add(_checkUpdateButton);
+        updateButtons.Controls.Add(_updateNowButton);
+        _updateStatusLabel.Margin = new Padding(6, 10, 3, 6);
+        updateButtons.Controls.Add(_updateStatusLabel);
+
         _pages[0] = Page(0, Stack(
             Row(_languageLabel, _languageCombo),
             Row(_hotkeyLabel, _hotkeyBox),
-            _hotkeyHintLabel));
+            _hotkeyHintLabel,
+            HorizontalRule(),
+            _updateSectionLabel,
+            Row(_currentVersionLabel, _currentVersionValue),
+            _autoCheckUpdateCheck,
+            updateButtons));
 
         // 페이지 1: 파일 이름 (이미지/텍스트 전환)
         var namingTabBar = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, Margin = new Padding(0, 0, 0, 10) };
@@ -319,6 +342,7 @@ public sealed class SettingsForm : Form
         _copyMarkdownCheck.Checked = cfg.CopyMarkdownToClipboard;
         _urlPrefixBox.Text = cfg.MarkdownUrlPrefix;
         _templateBox.Text = cfg.MarkdownTemplate;
+        _autoCheckUpdateCheck.Checked = cfg.CheckUpdateOnStartup;
         FillEnumCombo(_textExtCombo, TextExts, cfg.TextExtension, e => L.TextExtName(e));
         FillEnumCombo(_imageFormatCombo, ImageFormats, cfg.ImageFormat, k => L.ImageFormatName(k));
 
@@ -372,6 +396,12 @@ public sealed class SettingsForm : Form
         _hotkeyLabel.Text = L.HotkeyLabel;
         _hotkeyHintLabel.Text = L.HotkeyHint;
         _markdownSectionLabel.Text = L.MarkdownSection;
+        _updateSectionLabel.Text = L.UpdateSection;
+        _currentVersionLabel.Text = L.CurrentVersionLabel;
+        _currentVersionValue.Text = Updater.CurrentVersion.ToString();
+        _autoCheckUpdateCheck.Text = L.AutoCheckUpdate;
+        _checkUpdateButton.Text = L.CheckUpdate;
+        _updateNowButton.Text = L.UpdateNow;
         _textFolderLabel.Text = L.TextFolderLabel;
         _textFolderHintLabel.Text = L.TextFolderHint;
         _textExtLabel.Text = L.TextExtLabel;
@@ -423,6 +453,7 @@ public sealed class SettingsForm : Form
         ImageFormat = ImageFormats[_imageFormatCombo.SelectedIndex],
         Hotkey = _hotkeyBox.Text,
         Language = SelectedLanguage,
+        CheckUpdateOnStartup = _autoCheckUpdateCheck.Checked,
         CopyMarkdownToClipboard = _copyMarkdownCheck.Checked,
         MarkdownUrlPrefix = _urlPrefixBox.Text.Trim(),
         MarkdownTemplate = _templateBox.Text,
@@ -475,6 +506,59 @@ public sealed class SettingsForm : Form
         Result = cfg;
         DialogResult = DialogResult.OK;
         Close();
+    }
+
+    /// <summary>최신 릴리스를 조회해 상태를 표시한다. 새 버전이 있으면 [지금 업데이트]를 노출한다.</summary>
+    private async Task CheckForUpdateAsync()
+    {
+        _checkUpdateButton.Enabled = false;
+        _updateNowButton.Visible = false;
+        _pendingUpdate = null;
+        _updateStatusLabel.Text = L.UpdateChecking;
+        try
+        {
+            _pendingUpdate = await Updater.CheckAsync();
+            if (_pendingUpdate is null)
+            {
+                _updateStatusLabel.Text = L.UpToDate;
+            }
+            else
+            {
+                _updateStatusLabel.Text = L.UpdateAvailable(_pendingUpdate.Version);
+                _updateNowButton.Visible = Updater.IsSupported;
+                if (!Updater.IsSupported)
+                    _updateStatusLabel.Text += "  " + L.UpdateNotSupported;
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateStatusLabel.Text = L.UpdateFailed(ex.Message);
+        }
+        finally
+        {
+            _checkUpdateButton.Enabled = true;
+        }
+    }
+
+    /// <summary>내려받아 검증한 뒤 교체하고 재시작한다. 성공하면 앱이 종료된다.</summary>
+    private async Task ApplyUpdateAsync()
+    {
+        if (_pendingUpdate is not { } update) return;
+
+        _updateNowButton.Enabled = false;
+        _checkUpdateButton.Enabled = false;
+        try
+        {
+            var progress = new Progress<int>(p => _updateStatusLabel.Text = L.UpdateDownloading(p));
+            await Updater.DownloadAndApplyAsync(update, progress);
+            _updateStatusLabel.Text = L.UpdateRestarting;
+        }
+        catch (Exception ex)
+        {
+            _updateStatusLabel.Text = L.UpdateFailed(ex.Message);
+            _updateNowButton.Enabled = true;
+            _checkUpdateButton.Enabled = true;
+        }
     }
 
     private void Warn(string message)

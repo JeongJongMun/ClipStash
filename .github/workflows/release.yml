@@ -41,17 +41,22 @@ jobs:
         shell: pwsh
         run: dotnet publish EasyClipStash.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o publish
 
+      # zip과 함께 SHA256 체크섬을 발행한다. 앱의 자동 업데이트가 내려받은 파일을 이 값으로 검증한다.
       - name: Package
         shell: pwsh
         run: |
           $zip = "EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip"
           Compress-Archive -Path publish/EasyClipStash.exe, LICENSE -DestinationPath $zip
-          Get-Item $zip | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          [IO.File]::WriteAllText("$zip.sha256", $hash)
+          Write-Host "$zip  $([math]::Round((Get-Item $zip).Length/1MB,1)) MB  sha256=$hash"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           name: EasyClipStash ${{ steps.ver.outputs.tag }}
-          files: EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip
+          files: |
+            EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip
+            EasyClipStash-${{ steps.ver.outputs.tag }}-win-x64.zip.sha256
           generate_release_notes: true

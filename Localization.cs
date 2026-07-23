@@ -97,6 +97,33 @@ public static class L
     public static string TabText => Ko ? "텍스트" : "Text";
     public static string MarkdownSection => Ko ? "마크다운" : "Markdown";
 
+    // ── 업데이트 ──
+    public static string UpdateSection => Ko ? "업데이트" : "Update";
+    public static string CurrentVersionLabel => Ko ? "현재 버전" : "Current version";
+    public static string CheckUpdate => Ko ? "업데이트 확인" : "Check for updates";
+    public static string UpdateNow => Ko ? "지금 업데이트" : "Update now";
+    public static string AutoCheckUpdate
+        => Ko ? "시작할 때 자동으로 업데이트 확인" : "Check for updates at startup";
+    public static string UpdateChecking => Ko ? "확인 중…" : "Checking…";
+    public static string UpToDate => Ko ? "최신 버전입니다." : "You are up to date.";
+    public static string UpdateAvailable(Version v)
+        => Ko ? $"새 버전 {v} 이(가) 있습니다." : $"Version {v} is available.";
+    public static string UpdateDownloading(int percent)
+        => Ko ? $"내려받는 중… {percent}%" : $"Downloading… {percent}%";
+    public static string UpdateVerifying => Ko ? "무결성 확인 중…" : "Verifying…";
+    public static string UpdateRestarting => Ko ? "업데이트를 적용하려면 재시작합니다." : "Restarting to apply the update.";
+    public static string UpdateFailed(string reason)
+        => Ko ? $"업데이트 실패: {reason}" : $"Update failed: {reason}";
+    public static string UpdateNotSupported
+        => Ko ? "개발 빌드에서는 자동 업데이트를 쓸 수 없습니다." : "Auto-update is unavailable in development builds.";
+    public static string UpdateChecksumMismatch
+        => Ko ? "내려받은 파일의 체크섬이 일치하지 않습니다." : "Checksum of the downloaded file does not match.";
+    public static string UpdateChecksumMissing
+        => Ko ? "이 릴리스에는 체크섬이 없어 자동 설치할 수 없습니다. 직접 내려받아 주세요."
+              : "This release has no checksum, so it cannot be installed automatically. Please download it manually.";
+    public static string UpdateExeMissing
+        => Ko ? "내려받은 파일에서 실행 파일을 찾지 못했습니다." : "Executable not found in the downloaded package.";
+
     // ── 텍스트 저장 ──
     public static string TextFolderLabel => Ko ? "텍스트 저장 위치" : "Text save location";
     public static string TextFolderHint

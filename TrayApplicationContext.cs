@@ -65,6 +65,24 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _hotkeys.HotkeyPressed += SaveClipboard;
         ApplyConfig();
+
+        Updater.CleanupPreviousUpdate();   // 지난 업데이트가 남긴 .old 파일 정리
+        if (_config.CheckUpdateOnStartup)
+            _ = CheckUpdateInBackgroundAsync();
+    }
+
+    /// <summary>시작 시 조용히 새 버전을 확인하고, 있으면 트레이 알림만 띄운다. 실패는 무시한다.</summary>
+    private async Task CheckUpdateInBackgroundAsync()
+    {
+        try
+        {
+            if (await Updater.CheckAsync() is { } update)
+                Notify("EasyClipStash", L.UpdateAvailable(update.Version), ToolTipIcon.Info);
+        }
+        catch
+        {
+            // 네트워크가 없거나 조회에 실패해도 앱 사용에는 지장이 없다.
+        }
     }
 
     /// <summary>설정값을 UI(메뉴 라벨·언어)와 단축키 등록에 반영한다.</summary>
