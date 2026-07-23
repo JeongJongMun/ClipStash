@@ -9,7 +9,7 @@ public class AppConfig
     public ImageFormatKind ImageFormat { get; set; } = ImageFormatKind.Png;
     public string Hotkey { get; set; } = "Ctrl+Alt+V";
     public bool CopyMarkdownToClipboard { get; set; } = true;
-    public string MarkdownUrlPrefix { get; set; } = "/assets/img/inpost";
+    public string MarkdownUrlPrefix { get; set; } = "/assets/img";
     public string MarkdownTemplate { get; set; } = "![]({url})";
     public Lang Language { get; set; } = L.DetectDefault();
 
