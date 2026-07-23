@@ -9,6 +9,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private AppConfig _config;
     private string? _lastSavedPath;
     private SettingsForm? _settingsForm;
+    private Action? _balloonClickAction;
 
     private readonly ToolStripMenuItem _saveItem;
     private readonly ToolStripMenuItem _openLastItem;
@@ -62,6 +63,8 @@ public sealed class TrayApplicationContext : ApplicationContext
             Visible = true,
         };
         _trayIcon.DoubleClick += (_, _) => OpenSettings();
+        _trayIcon.BalloonTipClicked += (_, _) => RunBalloonAction();
+        _trayIcon.BalloonTipClosed += (_, _) => _balloonClickAction = null;   // 사라진 알림의 동작이 남지 않게
 
         _hotkeys.HotkeyPressed += SaveClipboard;
         ApplyConfig();
@@ -77,7 +80,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         try
         {
             if (await Updater.CheckAsync() is { } update)
-                Notify("EasyClipStash", L.UpdateAvailable(update.Version), ToolTipIcon.Info);
+                Notify("EasyClipStash", L.UpdateAvailable(update.Version), ToolTipIcon.Info, OpenSettings);
         }
         catch
         {
@@ -129,7 +132,8 @@ public sealed class TrayApplicationContext : ApplicationContext
                 Clipboard.SetText(_config.BuildMarkdown(saved.Path));
                 message += "\n" + L.MarkdownCopied;
             }
-            Notify("EasyClipStash", message, ToolTipIcon.Info);
+            // 알림을 누르면 저장된 파일이 선택된 채로 탐색기가 열린다.
+            Notify("EasyClipStash", message, ToolTipIcon.Info, () => RevealInExplorer(saved.Path));
         }
         catch (Exception ex)
         {
@@ -178,9 +182,37 @@ public sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
-    private void Notify(string title, string message, ToolTipIcon icon)
+    /// <summary>
+    /// 트레이 알림을 띄운다. onClick을 주면 사용자가 알림을 눌렀을 때 그 동작이 실행된다.
+    /// (알림마다 의미가 달라서 클릭 동작을 함께 넘기는 방식으로 둔다)
+    /// </summary>
+    private void Notify(string title, string message, ToolTipIcon icon, Action? onClick = null)
     {
+        _balloonClickAction = onClick;
         _trayIcon.ShowBalloonTip(3000, title, message, icon);
+    }
+
+    /// <summary>알림 클릭 동작을 실행한다. 실패해도 앱이 죽지 않게 감싼다.</summary>
+    private void RunBalloonAction()
+    {
+        var action = _balloonClickAction;
+        _balloonClickAction = null;
+        try { action?.Invoke(); }
+        catch { /* 폴더가 사라진 경우 등 — 클릭 반응이 없을 뿐 앱에는 영향 없다 */ }
+    }
+
+    /// <summary>탐색기에서 해당 파일을 선택한 채로 폴더를 연다. 파일이 없으면 폴더만 연다.</summary>
+    private static void RevealInExplorer(string path)
+    {
+        if (File.Exists(path))
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+            return;
+        }
+
+        string? folder = Path.GetDirectoryName(path);
+        if (folder is not null && Directory.Exists(folder))
+            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
     }
 
     protected override void ExitThreadCore()
