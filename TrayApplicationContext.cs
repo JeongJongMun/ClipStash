@@ -61,7 +61,9 @@ public sealed class TrayApplicationContext : ApplicationContext
         _trayIcon = new NotifyIcon
         {
             Icon = LoadAppIcon(),
-            Text = "EasyClipStash",
+            // 아이콘에 마우스를 올리면 실행 중인 버전이 보인다.
+            // (폴더·파일 이름에는 버전을 넣지 않으므로 여기서 확인한다)
+            Text = $"EasyClipStash v{Updater.CurrentVersion}",
             ContextMenuStrip = menu,
             Visible = true,
         };
