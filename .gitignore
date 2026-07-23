@@ -1,0 +1,25 @@
+# 빌드 산출물
+bin/
+obj/
+
+# 사용자별 설정 — 저장 경로·단축키 등 각자 다르므로 커밋하지 않는다.
+# (실제로는 exe 옆 bin/ 안에 생성되지만, 루트로 복사하는 경우까지 대비)
+config.json
+config.json.bak
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# 게시/배포 산출물
+publish/
+*.publishsettings
+
+# 기타
+*.log
+Thumbs.db

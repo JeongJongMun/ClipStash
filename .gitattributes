@@ -1,0 +1,14 @@
+# 텍스트 파일 줄바꿈을 저장소에는 LF로 통일 (체크아웃 시 Windows에서는 CRLF)
+* text=auto
+
+*.cs text diff=csharp
+*.csproj text
+*.md text
+*.json text
+
+# 바이너리로 취급
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary
+*.dll binary
