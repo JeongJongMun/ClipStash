@@ -187,7 +187,16 @@ public static class Updater
             throw;
         }
 
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(currentExe) { UseShellExecute = true });
+        // 새 인스턴스를 띄우기 전에 단일 실행 잠금을 먼저 푼다.
+        // Application.Exit()는 종료를 시작만 하므로, 잠금을 쥔 채로 새 인스턴스를 띄우면
+        // 새 인스턴스가 "이미 실행 중"으로 튕겨 나가 결국 아무것도 남지 않는다.
+        Program.ReleaseInstanceLock();
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(currentExe)
+        {
+            UseShellExecute = true,
+            Arguments = Program.AfterUpdateArgument,   // 혹시 늦게 풀리더라도 새 인스턴스가 기다려준다
+        });
         Application.Exit();
     }
 
