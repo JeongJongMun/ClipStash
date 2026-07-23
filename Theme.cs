@@ -9,20 +9,16 @@ namespace ClipStash;
 /// </summary>
 public static class Theme
 {
+    /// <summary>모든 면에 쓰는 단일 배경. 면끼리 명암으로 나누지 않고 선으로만 구분한다.</summary>
     public static readonly Color Background = ColorTranslator.FromHtml("#1A1A1A");
+
     public static readonly Color Accent = ColorTranslator.FromHtml("#F5EFE0");
 
-    /// <summary>사이드바처럼 배경과 살짝 구분해야 하는 면.</summary>
-    public static readonly Color Surface = ColorTranslator.FromHtml("#141414");
+    /// <summary>구분선·입력 칸 테두리. 베이지를 배경 쪽으로 섞어 과하지 않게.</summary>
+    public static readonly Color Line = Blend(Accent, Background, 0.50);
 
-    /// <summary>입력 칸 배경. 배경보다 밝게 해서 입력 영역임을 드러낸다.</summary>
-    public static readonly Color Field = ColorTranslator.FromHtml("#262626");
-
-    /// <summary>보조 설명용 흐린 글자 (베이지를 배경 쪽으로 섞음).</summary>
-    public static readonly Color Muted = Blend(Accent, Background, 0.60);
-
-    /// <summary>구분선·테두리.</summary>
-    public static readonly Color Border = Blend(Accent, Background, 0.22);
+    /// <summary>보조 설명용 흐린 글자.</summary>
+    public static readonly Color Muted = Blend(Accent, Background, 0.62);
 
     /// <summary>役할 태그. Tag에 넣으면 <see cref="Apply"/>가 알아본다.</summary>
     public const string Muted_ = "muted";
@@ -41,16 +37,16 @@ public static class Theme
         switch (control)
         {
             case TextBox textBox:
-                textBox.BackColor = Field;
+                textBox.BackColor = Background;
                 textBox.ForeColor = Accent;
-                textBox.BorderStyle = BorderStyle.FixedSingle;
+                textBox.BorderStyle = BorderStyle.FixedSingle;   // 테두리는 DarkTextBox가 베이지로 덧그린다
                 return;
 
             case ComboBox combo:
                 // DropDownList는 비주얼 스타일이 직접 그려서 BackColor를 무시한다.
                 // 컨트롤에서 테마를 벗겨내야(SetWindowTheme) 지정한 색이 실제로 칠해진다.
                 combo.FlatStyle = FlatStyle.Flat;
-                combo.BackColor = Field;
+                combo.BackColor = Background;
                 combo.ForeColor = Accent;
                 combo.DrawMode = DrawMode.OwnerDrawFixed;
                 combo.DrawItem -= DrawComboItem;
@@ -59,19 +55,19 @@ public static class Theme
                 return;
 
             case NumericUpDown numeric:
-                numeric.BackColor = Field;
+                numeric.BackColor = Background;
                 numeric.ForeColor = Accent;
                 numeric.BorderStyle = BorderStyle.FixedSingle;
                 // 내부 UpDownButtons에서 테마를 벗기면 렌더링이 깨지므로 색만 바꾼다.
                 foreach (Control child in numeric.Controls)
-                    child.BackColor = Field;
+                    child.BackColor = Background;
                 return;                        // 내부 컨트롤은 더 건드리지 않는다
 
             case CheckBox check:
                 check.FlatStyle = FlatStyle.Flat;
                 check.BackColor = Background;
                 check.ForeColor = Accent;
-                check.FlatAppearance.BorderColor = Border;
+                check.FlatAppearance.BorderColor = Line;
                 check.FlatAppearance.CheckedBackColor = Accent;
                 break;
 
@@ -86,11 +82,7 @@ public static class Theme
                 break;
 
             case Panel panel:
-                panel.BackColor = (string?)panel.Tag switch
-                {
-                    Rule => Border,
-                    _ => panel.BackColor == SystemColors.ControlLight ? Surface : Background,
-                };
+                panel.BackColor = (string?)panel.Tag == Rule ? Line : Background;
                 break;
 
             default:
@@ -113,7 +105,7 @@ public static class Theme
         bool inEditArea = (e.State & DrawItemState.ComboBoxEdit) != 0;
         bool highlighted = !inEditArea && (e.State & DrawItemState.Selected) != 0;
 
-        using (var background = new SolidBrush(highlighted ? Accent : Field))
+        using (var background = new SolidBrush(highlighted ? Accent : Background))
             e.Graphics.FillRectangle(background, e.Bounds);
 
         if (e.Index >= 0)
@@ -131,9 +123,9 @@ public static class Theme
         button.UseVisualStyleBackColor = false;
         button.BackColor = primary ? Accent : Background;
         button.ForeColor = primary ? Background : Accent;
-        button.FlatAppearance.BorderColor = primary ? Accent : Border;
+        button.FlatAppearance.BorderColor = primary ? Accent : Line;
         button.FlatAppearance.BorderSize = 1;
-        button.FlatAppearance.MouseOverBackColor = primary ? Blend(Accent, Background, 0.85) : Field;
+        button.FlatAppearance.MouseOverBackColor = primary ? Blend(Accent, Background, 0.85) : Blend(Accent, Background, 0.15);
     }
 
     /// <summary>선택/비선택 상태의 사이드바 버튼 색을 칠한다.</summary>
@@ -141,11 +133,25 @@ public static class Theme
     {
         button.FlatStyle = FlatStyle.Flat;
         button.UseVisualStyleBackColor = false;
-        button.BackColor = selected ? Accent : Surface;
+        button.BackColor = selected ? Accent : Background;
         button.ForeColor = selected ? Background : Accent;
         button.FlatAppearance.BorderSize = 0;
-        button.FlatAppearance.MouseOverBackColor = selected ? Accent : Field;
+        button.FlatAppearance.MouseOverBackColor = selected ? Accent : Blend(Accent, Background, 0.15);
         button.Font = new Font(button.Font, selected ? FontStyle.Bold : FontStyle.Regular);
+    }
+
+    /// <summary>영역을 나누는 1px 베이지 선. 방향에 맞춰 Dock을 지정해 쓴다.</summary>
+    public static Panel Divider(DockStyle dock)
+    {
+        bool vertical = dock is DockStyle.Left or DockStyle.Right;
+        return new Panel
+        {
+            Dock = dock,
+            Width = vertical ? 1 : 0,
+            Height = vertical ? 0 : 1,
+            BackColor = Line,
+            Tag = Rule,
+        };
     }
 
     [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]

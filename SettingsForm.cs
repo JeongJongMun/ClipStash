@@ -15,14 +15,14 @@ public sealed class SettingsForm : Form
 
     // 입력 컨트롤
     private readonly DarkComboBox _languageCombo = new() { Width = 200 };
-    private readonly TextBox _savePathBox = new() { Width = 300 };
+    private readonly DarkTextBox _savePathBox = new() { Width = 300 };
     private readonly DarkComboBox _imageFormatCombo = new() { Width = 200 };
-    private readonly TextBox _hotkeyBox = new() { Width = 300, ReadOnly = true, BackColor = SystemColors.Window, Cursor = Cursors.Hand };
-    private readonly TextBox _textPathBox = new() { Width = 300 };
+    private readonly DarkTextBox _hotkeyBox = new() { Width = 300, ReadOnly = true, BackColor = SystemColors.Window, Cursor = Cursors.Hand };
+    private readonly DarkTextBox _textPathBox = new() { Width = 300 };
     private readonly DarkComboBox _textExtCombo = new() { Width = 200 };
     private readonly CheckBox _copyMarkdownCheck = new() { AutoSize = true, Margin = new Padding(6, 8, 3, 3) };
-    private readonly TextBox _urlPrefixBox = new() { Width = 300 };
-    private readonly TextBox _templateBox = new() { Width = 300 };
+    private readonly DarkTextBox _urlPrefixBox = new() { Width = 300 };
+    private readonly DarkTextBox _templateBox = new() { Width = 300 };
 
     // 이름 규칙 (이미지/텍스트 각각 독립) — OS가 그리는 TabControl은 다크로 칠할 수 없어
     // 사이드바와 같은 토글 버튼 방식으로 전환한다.
@@ -163,7 +163,6 @@ public sealed class SettingsForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            BackColor = SystemColors.ControlLight,   // Theme.Apply가 Surface로 바꾼다
             Padding = new Padding(8, 12, 8, 8),
         };
         for (int i = 0; i < _navButtons.Length; i++)
@@ -199,13 +198,19 @@ public sealed class SettingsForm : Form
         rightButtons.Controls.Add(_cancelButton);
         bottom.Controls.Add(_resetButton);
         bottom.Controls.Add(rightButtons);
+        bottom.Controls.Add(Theme.Divider(DockStyle.Top));    // 본문과 버튼 영역 구분
+
+        // 사이드바는 배경색이 아니라 세로 베이지 선으로 본문과 구분한다
+        var sidebarArea = new Panel { Dock = DockStyle.Fill };
+        sidebarArea.Controls.Add(sidebar);
+        sidebarArea.Controls.Add(Theme.Divider(DockStyle.Right));
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2 };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, SidebarWidth));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
-        root.Controls.Add(sidebar, 0, 0);
+        root.Controls.Add(sidebarArea, 0, 0);
         root.Controls.Add(content, 1, 0);
         root.Controls.Add(bottom, 0, 1);
         root.SetColumnSpan(bottom, 2);

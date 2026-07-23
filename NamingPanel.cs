@@ -12,13 +12,13 @@ public sealed class NamingPanel : FlowLayoutPanel
     private static readonly TimeStyle[] TimeStyles = { TimeStyle.None, TimeStyle.Hms, TimeStyle.HmsDash, TimeStyle.Hm };
 
     private readonly DarkComboBox _modeCombo = new() { Width = 200 };
-    private readonly NumericUpDown _startNumber = new() { Width = 80, Minimum = 0, Maximum = 1_000_000 };
+    private readonly DarkNumericUpDown _startNumber = new() { Width = 80, Minimum = 0, Maximum = 1_000_000 };
     private readonly DarkComboBox _numberPadding = new() { Width = 200 };
     private readonly DarkComboBox _dateStyle = new() { Width = 200 };
     private readonly DarkComboBox _timeStyle = new() { Width = 200 };
     private readonly DarkComboBox _dailyPadding = new() { Width = 200 };
-    private readonly TextBox _prefix = new() { Width = 200 };
-    private readonly TextBox _suffix = new() { Width = 200 };
+    private readonly DarkTextBox _prefix = new() { Width = 200 };
+    private readonly DarkTextBox _suffix = new() { Width = 200 };
 
     private readonly Label _modeLabel = FieldLabel();
     private readonly Label _startNumberLabel = FieldLabel();

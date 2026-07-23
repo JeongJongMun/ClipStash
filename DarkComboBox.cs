@@ -32,7 +32,7 @@ public sealed class DarkComboBox : ComboBox
 
         // 드롭다운 버튼 영역을 배경색으로 덮고 화살표를 다시 그린다
         var button = new Rectangle(Width - ButtonWidth - 1, 1, ButtonWidth, Height - 2);
-        using (var fill = new SolidBrush(Theme.Field))
+        using (var fill = new SolidBrush(Theme.Background))
             g.FillRectangle(fill, button);
 
         g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -48,7 +48,7 @@ public sealed class DarkComboBox : ComboBox
 
         // 네이티브가 그린 밝은 테두리를 덮는다
         g.SmoothingMode = SmoothingMode.None;
-        using (var pen = new Pen(Theme.Border))
+        using (var pen = new Pen(Theme.Line))
             g.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
     }
 }
