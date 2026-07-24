@@ -11,7 +11,7 @@ public class AppConfig
     public bool CopyMarkdownToClipboard { get; set; } = true;
     public string MarkdownUrlPrefix { get; set; } = "/assets/img";
     public string MarkdownTemplate { get; set; } = "![]({url})";
-    public Lang Language { get; set; } = L.DetectDefault();
+    public Lang Language { get; set; } = L.Default;
     public bool CheckUpdateOnStartup { get; set; } = true;
 
     // ── 파일 이름 규칙 (이미지·텍스트 각각 독립) ──

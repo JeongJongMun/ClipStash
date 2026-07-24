@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace EasyClipStash;
 
 public enum Lang { Korean, English }
@@ -10,13 +8,12 @@ public enum Lang { Korean, English }
 /// </summary>
 public static class L
 {
-    public static Lang Current { get; set; } = DetectDefault();
+    /// <summary>기본 언어. 설정을 읽기 전(중복 실행 안내 등)에도 이 값이 쓰인다.</summary>
+    public const Lang Default = Lang.English;
+
+    public static Lang Current { get; set; } = Default;
 
     private static bool Ko => Current == Lang.Korean;
-
-    /// <summary>시스템 UI 언어가 한국어면 한국어, 아니면 영어를 기본값으로.</summary>
-    public static Lang DetectDefault()
-        => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ko" ? Lang.Korean : Lang.English;
 
     // 언어 선택 드롭다운에 표시할 이름 (자국어 표기라 번역하지 않는다)
     public static string DisplayName(Lang lang) => lang == Lang.Korean ? "한국어" : "English";
